@@ -128,6 +128,17 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 }
 .mob-menu{display:none;width:32px;height:32px;border:1px solid var(--border);background:none;border-radius:var(--r);color:var(--muted);align-items:center;justify-content:center;cursor:pointer;margin-right:6px}
 .mob-menu svg{width:16px;height:16px}
+
+/* ── ROOM FORM ── */
+.room-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.room-field{display:flex;flex-direction:column;gap:5px}
+.room-field-label{font-size:10px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase}
+.room-field-hint{font-size:10px;letter-spacing:0;text-transform:none;color:var(--dim)}
+.room-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;padding:7px 9px;outline:none;font-family:var(--font);transition:border-color .15s}
+.room-field input:focus{border-color:var(--acc)}
+.room-field input::placeholder{color:var(--dim)}
+.room-pass-row{display:flex;gap:6px;align-items:center}
+.room-pass-row input{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -170,9 +181,21 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="avi" id="avi">?</div>
       <span id="uname-label">—</span>
     </div>
-    <p class="sec-label">Join or Create Room</p> <div class="join-row">
-      <input id="room-inp" type="text" placeholder="room name" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/> <input id="room-pass" type="password" placeholder="set/enter pass" onkeydown="if(event.key==='Enter')joinRoom()"/> <button class="ico-btn" onclick="joinRoom()" title="Join or Create"> <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </button>
+    <p class="sec-label">Join or Create Room</p>
+    <div class="room-form">
+      <div class="room-field">
+        <label class="room-field-label">Room name</label>
+        <input id="room-inp" type="text" placeholder="e.g. general" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/>
+      </div>
+      <div class="room-field">
+        <label class="room-field-label">Password <span class="room-field-hint">(set on create &middot; required to join)</span></label>
+        <div class="room-pass-row">
+          <input id="room-pass" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')joinRoom()"/>
+          <button class="ico-btn" onclick="joinRoom()" title="Join or Create Room">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="room-list" id="room-list"></div>
     <div class="sb-foot">
