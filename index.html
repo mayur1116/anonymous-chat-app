@@ -170,12 +170,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="avi" id="avi">?</div>
       <span id="uname-label">—</span>
     </div>
-    <p class="sec-label">Rooms</p>
-    <div class="join-row">
-      <input id="room-inp" type="text" placeholder="room-name" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/>
-      <input id="room-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')joinRoom()"/>
-      <button class="ico-btn" onclick="joinRoom()" title="Join room">
-        <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <p class="sec-label">Join or Create Room</p> <div class="join-row">
+      <input id="room-inp" type="text" placeholder="room name" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/> <input id="room-pass" type="password" placeholder="set/enter pass" onkeydown="if(event.key==='Enter')joinRoom()"/> <button class="ico-btn" onclick="joinRoom()" title="Join or Create"> <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
     </div>
     <div class="room-list" id="room-list"></div>
@@ -225,7 +221,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 </div><div class="toast" id="toast"></div>
 
 <script>
-const SERVER   = 'http://localhost:3000';
+const SERVER   = 'https://anonymous-chat-app-8f3i.onrender.com';
 const SEC_KEY  = 'anon-chat-super-secret-key-2024';
 const MAX_MSG  = 500;
 
