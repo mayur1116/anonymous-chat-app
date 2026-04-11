@@ -46,7 +46,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 
 /* ── CHAT LAYOUT ── */
 #chat{flex-direction:row}
-.sidebar{width:230px;min-width:230px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:14px 12px;gap:0}
+.sidebar{width:260px;min-width:260px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 14px;gap:0;overflow-y:auto}
 .sb-brand{display:flex;align-items:center;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .sb-brand .ico{width:26px;height:26px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center}
 .sb-brand .ico svg{width:13px;height:13px}
@@ -130,14 +130,14 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 .mob-menu svg{width:16px;height:16px}
 
 /* ── ROOM FORM ── */
-.room-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
-.room-field{display:flex;flex-direction:column;gap:5px}
-.room-field-label{font-size:10px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase}
-.room-field-hint{font-size:10px;letter-spacing:0;text-transform:none;color:var(--dim)}
-.room-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;padding:7px 9px;outline:none;font-family:var(--font);transition:border-color .15s}
-.room-field input:focus{border-color:var(--acc)}
-.room-field input::placeholder{color:var(--dim)}
-.room-pass-row{display:flex;gap:6px;align-items:center}
+.room-form{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;width:100%}
+.room-field{display:flex;flex-direction:column;gap:4px;width:100%}
+.room-field-label{font-size:10px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.room-field-hint{font-size:9px;letter-spacing:0;text-transform:none;color:var(--dim);font-weight:normal;display:block;margin-top:1px}
+.room-field input,.room-pass-row input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;padding:7px 9px;outline:none;font-family:var(--font);transition:border-color .15s;box-sizing:border-box}
+.room-field input:focus,.room-pass-row input:focus{border-color:var(--acc)}
+.room-field input::placeholder,.room-pass-row input::placeholder{color:var(--dim)}
+.room-pass-row{display:flex;gap:6px;align-items:center;width:100%}
 .room-pass-row input{flex:1;min-width:0}
 </style>
 </head>
@@ -181,17 +181,24 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="avi" id="avi">?</div>
       <span id="uname-label">—</span>
     </div>
-    <p class="sec-label">Join or Create Room</p>
+    <p class="sec-label" style="margin-bottom:10px">Join or Create Room</p>
     <div class="room-form">
       <div class="room-field">
         <label class="room-field-label">Room name</label>
-        <input id="room-inp" type="text" placeholder="e.g. general" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/>
+        <input id="room-inp" type="text" placeholder="e.g. general" maxlength="50"
+          style="width:100%;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')joinRoom()"/>
       </div>
       <div class="room-field">
-        <label class="room-field-label">Password <span class="room-field-hint">(set on create &middot; required to join)</span></label>
+        <label class="room-field-label">
+          Room password
+          <span class="room-field-hint">Set when creating &bull; required to join</span>
+        </label>
         <div class="room-pass-row">
-          <input id="room-pass" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')joinRoom()"/>
-          <button class="ico-btn" onclick="joinRoom()" title="Join or Create Room">
+          <input id="room-pass" type="password" placeholder="password"
+            style="flex:1;min-width:0;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')joinRoom()"/>
+          <button class="ico-btn" onclick="joinRoom()" title="Join or Create Room" style="flex-shrink:0">
             <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           </button>
         </div>
