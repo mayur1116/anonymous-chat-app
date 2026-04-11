@@ -316,31 +316,40 @@ function joinRoom() {
 }
 
 function switchRoom(name, history = null) {
+  // Case 1: switching to a different room we haven't joined yet in this session
   if (activeRoom && activeRoom !== name) {
     socket.emit('join_room', { room: name, password: roomPasswordsCache[name] }, ack => {
       if (ack?.error) { toast(ack.error); return; }
-      if (ack?.users) { rooms[name] = ack.users; setCount(ack.users); }
-      if (ack?.history) {
-        clearMsgs();
+      if (ack?.users) { rooms[name] = ack.users; }
+
+      // Activate the room view, then render history from the ack
+      _activateRoomView(name, ack?.users || rooms[name] || []);
+      clearMsgs();
+      if (ack?.history && ack.history.length > 0) {
         ack.history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
       }
     });
+    return; // Wait for ack before doing anything else
   }
-  
+
+  // Case 2: first join (history already provided by joinRoom's ack) or re-clicking active room
+  _activateRoomView(name, rooms[name] || []);
+  clearMsgs();
+  if (history && history.length > 0) {
+    history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
+  }
+}
+
+// Shared helper — sets the active room and updates UI chrome
+function _activateRoomView(name, users) {
   activeRoom = name;
   document.getElementById('no-room').style.display  = 'none';
   const rv = document.getElementById('room-view');
   rv.style.display = 'flex';
   document.getElementById('h-room').textContent = name;
-  setCount(rooms[name] || []);
-  clearMsgs();
-  
-  if (history) {
-    history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
-  }
-
-  document.getElementById('msg-ta').disabled   = false;
-  document.getElementById('send-btn').disabled = false;
+  setCount(users);
+  document.getElementById('msg-ta').disabled    = false;
+  document.getElementById('send-btn').disabled  = false;
   document.getElementById('msg-ta').placeholder = `Message #${name}…`;
   renderRooms();
   document.getElementById('sidebar').classList.remove('open');
