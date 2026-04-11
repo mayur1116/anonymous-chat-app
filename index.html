@@ -133,7 +133,6 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 <body>
 <div id="app">
 
-<!-- ═══ AUTH PAGE ═══════════════════════════════════════════════════════ -->
 <div class="page show" id="auth">
   <div class="auth-wrap">
     <div class="brand">
@@ -159,10 +158,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
   </div>
 </div>
 
-<!-- ═══ CHAT PAGE ════════════════════════════════════════════════════════ -->
 <div class="page" id="chat">
 
-  <!-- sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sb-brand">
       <div class="ico"><svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6.5" r="3" fill="white"/><path d="M2 16c0-3.866 3.134-6 7-6s7 2.134 7 6" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg></div>
@@ -176,6 +173,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
     <p class="sec-label">Rooms</p>
     <div class="join-row">
       <input id="room-inp" type="text" placeholder="room-name" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/>
+      <input id="room-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')joinRoom()"/>
       <button class="ico-btn" onclick="joinRoom()" title="Join room">
         <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
@@ -189,7 +187,6 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
     </div>
   </div>
 
-  <!-- main area -->
   <div class="main">
     <div class="no-room" id="no-room">
       <svg viewBox="0 0 44 44" fill="none"><rect x="4" y="8" width="36" height="24" rx="4" stroke="currentColor" stroke-width="1.6"/><path d="M14 32l-6 6V32" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 18h18M13 23h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -225,8 +222,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
   </div>
 </div>
 
-</div><!-- #app -->
-<div class="toast" id="toast"></div>
+</div><div class="toast" id="toast"></div>
 
 <script>
 const SERVER   = 'http://localhost:3000';
@@ -238,6 +234,7 @@ const dec = c => { try { return CryptoJS.AES.decrypt(c, SEC_KEY).toString(Crypto
 
 let socket = null, me = null, activeRoom = null, rooms = {};
 let authMode = 'login';
+let roomPasswordsCache = {};
 
 /* ── tab ── */
 function setTab(m) {
@@ -265,7 +262,7 @@ async function doAuth() {
     if (authMode === 'register') { toast('Account created — sign in!'); setTab('login'); return; }
     me = d.username;
     connectSocket(d.socketAuth);
-  } catch { errEl.textContent = 'Cannot reach server. Is it running on :3000?'; }
+  } catch { errEl.textContent = 'Cannot reach server. Is it running?'; }
   finally { btn.disabled = false; btn.textContent = authMode === 'login' ? 'Sign in' : 'Create account'; }
 }
 
@@ -302,23 +299,38 @@ function connectSocket(auth) {
 /* ── rooms ── */
 function joinRoom() {
   const inp = document.getElementById('room-inp');
+  const passInp = document.getElementById('room-pass');
   const name = inp.value.trim();
+  const pass = passInp ? passInp.value : '';
+
   if (!name || !socket) return;
-  socket.emit('join_room', { room: name }, ack => {
+
+  socket.emit('join_room', { room: name, password: pass }, ack => {
     if (ack?.error) { toast(ack.error); return; }
+    
     inp.value = '';
+    if (passInp) passInp.value = ''; 
+    
     rooms[name] = ack.users || [];
-    switchRoom(name);
+    roomPasswordsCache[name] = pass; 
+    
+    switchRoom(name, ack.history);
     renderRooms();
   });
 }
 
-function switchRoom(name) {
+function switchRoom(name, history = null) {
   if (activeRoom && activeRoom !== name) {
-    socket.emit('join_room', { room: name }, ack => {
+    socket.emit('join_room', { room: name, password: roomPasswordsCache[name] }, ack => {
+      if (ack?.error) { toast(ack.error); return; }
       if (ack?.users) { rooms[name] = ack.users; setCount(ack.users); }
+      if (ack?.history) {
+        clearMsgs();
+        ack.history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
+      }
     });
   }
+  
   activeRoom = name;
   document.getElementById('no-room').style.display  = 'none';
   const rv = document.getElementById('room-view');
@@ -326,6 +338,11 @@ function switchRoom(name) {
   document.getElementById('h-room').textContent = name;
   setCount(rooms[name] || []);
   clearMsgs();
+  
+  if (history) {
+    history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
+  }
+
   document.getElementById('msg-ta').disabled   = false;
   document.getElementById('send-btn').disabled = false;
   document.getElementById('msg-ta').placeholder = `Message #${name}…`;
