@@ -7,6 +7,7 @@
 "use strict";
 
 const express = require("express");
+const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -37,6 +38,7 @@ const MAX_MESSAGE_LENGTH = 500;
 const MAX_ROOM_NAME_LENGTH = 50;
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (_req, res) => {
