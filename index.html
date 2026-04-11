@@ -181,29 +181,42 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="avi" id="avi">?</div>
       <span id="uname-label">—</span>
     </div>
-    <p class="sec-label" style="margin-bottom:10px">Join or Create Room</p>
-    <div class="room-form">
-      <div class="room-field">
-        <label class="room-field-label">Room name</label>
+
+    <!-- ── ROOM FORM ── -->
+    <p style="font-size:10px;letter-spacing:.7px;color:#7777a0;text-transform:uppercase;margin-bottom:10px">Join or Create Room</p>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;width:100%">
+
+      <!-- Room Name -->
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:10px;letter-spacing:.6px;color:#7777a0;text-transform:uppercase">Room name</label>
         <input id="room-inp" type="text" placeholder="e.g. general" maxlength="50"
-          style="width:100%;box-sizing:border-box"
+          style="width:100%;box-sizing:border-box;background:#1e1e25;border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:#dddde8;font-size:13px;padding:8px 10px;outline:none;font-family:inherit"
+          onfocus="this.style.borderColor='#6c5ce7'" onblur="this.style.borderColor='rgba(255,255,255,0.07)'"
           onkeydown="if(event.key==='Enter')joinRoom()"/>
       </div>
-      <div class="room-field">
-        <label class="room-field-label">
+
+      <!-- Room Password -->
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:10px;letter-spacing:.6px;color:#7777a0;text-transform:uppercase">
           Room password
-          <span class="room-field-hint">Set when creating &bull; required to join</span>
+          <span style="display:block;font-size:10px;letter-spacing:0;text-transform:none;color:#44445a;margin-top:2px">Set on create &bull; required to join</span>
         </label>
-        <div class="room-pass-row">
+        <div style="display:flex;gap:6px;align-items:center">
           <input id="room-pass" type="password" placeholder="password"
-            style="flex:1;min-width:0;box-sizing:border-box"
+            style="flex:1;min-width:0;box-sizing:border-box;background:#1e1e25;border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:#dddde8;font-size:13px;padding:8px 10px;outline:none;font-family:inherit"
+            onfocus="this.style.borderColor='#6c5ce7'" onblur="this.style.borderColor='rgba(255,255,255,0.07)'"
             onkeydown="if(event.key==='Enter')joinRoom()"/>
-          <button class="ico-btn" onclick="joinRoom()" title="Join or Create Room" style="flex-shrink:0">
-            <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <button onclick="joinRoom()" title="Join or Create Room"
+            style="width:34px;height:34px;flex-shrink:0;border:1px solid rgba(255,255,255,0.07);background:#1e1e25;border-radius:10px;color:#7777a0;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 14 14" fill="none" style="width:14px;height:14px"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           </button>
         </div>
       </div>
+
     </div>
+    <!-- ── END ROOM FORM ── -->
+
     <div class="room-list" id="room-list"></div>
     <div class="sb-foot">
       <button class="logout" onclick="logout()">
