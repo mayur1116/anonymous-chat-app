@@ -2,6 +2,11 @@
  * users.js
  *
  * In-memory user registry and session management.
+ *
+ * Responsibilities:
+ *   - Store registered accounts (username → hashed password)
+ *   - Track active socket sessions (socketId → user object)
+ *   - Track which users are in each room (room → Set<username>)
  */
 
 const bcrypt = require("bcryptjs");
@@ -20,15 +25,14 @@ const sessions = {};
 // { [roomName]: Set<username> }
 const rooms = {};
 
-// ─── Room Passwords & History ────────────────────────────────────────────────
-// { [roomName]: hashedPassword }
-const roomPasswords = {};
-
-// { [roomName]: Array<{username, room, message, timestamp}> }
-const roomMessages = {};
-
 // ─── Account Operations ───────────────────────────────────────────────────────
 
+/**
+ * Registers a new user account.
+ * @param {string} username
+ * @param {string} password  Plaintext password — will be hashed.
+ * @returns {{ success: boolean, error?: string }}
+ */
 async function registerUser(username, password) {
   const name = username.trim();
 
@@ -46,6 +50,12 @@ async function registerUser(username, password) {
   return { success: true };
 }
 
+/**
+ * Validates login credentials.
+ * @param {string} username
+ * @param {string} password  Plaintext password to check.
+ * @returns {{ success: boolean, error?: string }}
+ */
 async function loginUser(username, password) {
   const name = username ? username.trim() : "";
 
@@ -66,14 +76,29 @@ async function loginUser(username, password) {
 
 // ─── Session Operations ───────────────────────────────────────────────────────
 
+/**
+ * Creates a session for a connected socket.
+ * @param {string} socketId
+ * @param {string} username
+ */
 function createSession(socketId, username) {
   sessions[socketId] = { username, room: null };
 }
 
+/**
+ * Retrieves the session object for a socket.
+ * @param {string} socketId
+ * @returns {{ username: string, room: string|null } | undefined}
+ */
 function getSession(socketId) {
   return sessions[socketId];
 }
 
+/**
+ * Removes a session on disconnect and cleans up room membership.
+ * @param {string} socketId
+ * @returns {{ username: string, room: string|null } | null}  The removed session.
+ */
 function removeSession(socketId) {
   const session = sessions[socketId];
   if (!session) return null;
@@ -89,23 +114,14 @@ function removeSession(socketId) {
 // ─── Room Operations ──────────────────────────────────────────────────────────
 
 /**
- * Adds a user to a room, checking/setting the password.
+ * Adds a user to a room, removing them from any previous room first.
+ * @param {string} socketId
+ * @param {string} roomName
+ * @returns {{ previousRoom: string|null, newRoom: string }}
  */
-async function joinRoom(socketId, roomName, password = "") {
+function joinRoom(socketId, roomName) {
   const session = sessions[socketId];
   if (!session) throw new Error("No session found for socket.");
-
-  // Password Protection Logic
-  if (roomPasswords[roomName]) {
-    // Room exists: verify password
-    const match = await bcrypt.compare(password, roomPasswords[roomName]);
-    if (!match) throw new Error("Incorrect room password.");
-  } else {
-    // New room: set password
-    if (!password) throw new Error("A password is required to create a new room.");
-    roomPasswords[roomName] = await bcrypt.hash(password, SALT_ROUNDS);
-    roomMessages[roomName] = []; // Initialize history
-  }
 
   const previousRoom = session.room;
 
@@ -124,6 +140,11 @@ async function joinRoom(socketId, roomName, password = "") {
   return { previousRoom, newRoom: roomName };
 }
 
+/**
+ * Removes a user from their current room.
+ * @param {string} socketId
+ * @returns {string|null}  The room they were removed from.
+ */
 function leaveRoom(socketId) {
   const session = sessions[socketId];
   if (!session || !session.room) return null;
@@ -133,7 +154,6 @@ function leaveRoom(socketId) {
     rooms[roomName].delete(session.username);
     if (rooms[roomName].size === 0) {
       delete rooms[roomName]; // Garbage-collect empty rooms
-      // Note: We do NOT delete roomPasswords or roomMessages here so history persists even if empty
     }
   }
 
@@ -141,37 +161,25 @@ function leaveRoom(socketId) {
   return roomName;
 }
 
+/**
+ * Returns a list of usernames in a given room.
+ * @param {string} roomName
+ * @returns {string[]}
+ */
 function getUsersInRoom(roomName) {
   return rooms[roomName] ? [...rooms[roomName]] : [];
 }
 
+/**
+ * Returns a snapshot of all active rooms and their member counts.
+ * @returns {{ [roomName]: number }}
+ */
 function getRoomSummary() {
   const summary = {};
   for (const [room, members] of Object.entries(rooms)) {
     summary[room] = members.size;
   }
   return summary;
-}
-
-// ─── Message History Operations ───────────────────────────────────────────────
-
-/**
- * Saves a message to the room's history (capped at 200 messages).
- */
-function saveMessage(roomName, messageObj) {
-  if (!roomMessages[roomName]) roomMessages[roomName] = [];
-  roomMessages[roomName].push(messageObj);
-  
-  if (roomMessages[roomName].length > 200) {
-    roomMessages[roomName].shift();
-  }
-}
-
-/**
- * Retrieves the message history for a room.
- */
-function getMessages(roomName) {
-  return roomMessages[roomName] || [];
 }
 
 module.exports = {
@@ -184,6 +192,4 @@ module.exports = {
   leaveRoom,
   getUsersInRoom,
   getRoomSummary,
-  saveMessage,
-  getMessages,
 };

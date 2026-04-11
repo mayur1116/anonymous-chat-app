@@ -46,7 +46,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 
 /* ── CHAT LAYOUT ── */
 #chat{flex-direction:row}
-.sidebar{width:260px;min-width:260px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 14px;gap:0;overflow-y:auto}
+.sidebar{width:230px;min-width:230px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:14px 12px;gap:0}
 .sb-brand{display:flex;align-items:center;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .sb-brand .ico{width:26px;height:26px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center}
 .sb-brand .ico svg{width:13px;height:13px}
@@ -128,22 +128,12 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 }
 .mob-menu{display:none;width:32px;height:32px;border:1px solid var(--border);background:none;border-radius:var(--r);color:var(--muted);align-items:center;justify-content:center;cursor:pointer;margin-right:6px}
 .mob-menu svg{width:16px;height:16px}
-
-/* ── ROOM FORM ── */
-.room-form{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;width:100%}
-.room-field{display:flex;flex-direction:column;gap:4px;width:100%}
-.room-field-label{font-size:10px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
-.room-field-hint{font-size:9px;letter-spacing:0;text-transform:none;color:var(--dim);font-weight:normal;display:block;margin-top:1px}
-.room-field input,.room-pass-row input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;padding:7px 9px;outline:none;font-family:var(--font);transition:border-color .15s;box-sizing:border-box}
-.room-field input:focus,.room-pass-row input:focus{border-color:var(--acc)}
-.room-field input::placeholder,.room-pass-row input::placeholder{color:var(--dim)}
-.room-pass-row{display:flex;gap:6px;align-items:center;width:100%}
-.room-pass-row input{flex:1;min-width:0}
 </style>
 </head>
 <body>
 <div id="app">
 
+<!-- ═══ AUTH PAGE ═══════════════════════════════════════════════════════ -->
 <div class="page show" id="auth">
   <div class="auth-wrap">
     <div class="brand">
@@ -169,8 +159,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
   </div>
 </div>
 
+<!-- ═══ CHAT PAGE ════════════════════════════════════════════════════════ -->
 <div class="page" id="chat">
 
+  <!-- sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sb-brand">
       <div class="ico"><svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6.5" r="3" fill="white"/><path d="M2 16c0-3.866 3.134-6 7-6s7 2.134 7 6" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg></div>
@@ -181,42 +173,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="avi" id="avi">?</div>
       <span id="uname-label">—</span>
     </div>
-
-    <!-- ── ROOM FORM ── -->
-    <p style="font-size:10px;letter-spacing:.7px;color:#7777a0;text-transform:uppercase;margin-bottom:10px">Join or Create Room</p>
-
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;width:100%">
-
-      <!-- Room Name -->
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <label style="font-size:10px;letter-spacing:.6px;color:#7777a0;text-transform:uppercase">Room name</label>
-        <input id="room-inp" type="text" placeholder="e.g. general" maxlength="50"
-          style="width:100%;box-sizing:border-box;background:#1e1e25;border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:#dddde8;font-size:13px;padding:8px 10px;outline:none;font-family:inherit"
-          onfocus="this.style.borderColor='#6c5ce7'" onblur="this.style.borderColor='rgba(255,255,255,0.07)'"
-          onkeydown="if(event.key==='Enter')joinRoom()"/>
-      </div>
-
-      <!-- Room Password -->
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <label style="font-size:10px;letter-spacing:.6px;color:#7777a0;text-transform:uppercase">
-          Room password
-          <span style="display:block;font-size:10px;letter-spacing:0;text-transform:none;color:#44445a;margin-top:2px">Set on create &bull; required to join</span>
-        </label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input id="room-pass" type="password" placeholder="password"
-            style="flex:1;min-width:0;box-sizing:border-box;background:#1e1e25;border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:#dddde8;font-size:13px;padding:8px 10px;outline:none;font-family:inherit"
-            onfocus="this.style.borderColor='#6c5ce7'" onblur="this.style.borderColor='rgba(255,255,255,0.07)'"
-            onkeydown="if(event.key==='Enter')joinRoom()"/>
-          <button onclick="joinRoom()" title="Join or Create Room"
-            style="width:34px;height:34px;flex-shrink:0;border:1px solid rgba(255,255,255,0.07);background:#1e1e25;border-radius:10px;color:#7777a0;cursor:pointer;display:flex;align-items:center;justify-content:center">
-            <svg viewBox="0 0 14 14" fill="none" style="width:14px;height:14px"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </button>
-        </div>
-      </div>
-
+    <p class="sec-label">Rooms</p>
+    <div class="join-row">
+      <input id="room-inp" type="text" placeholder="room-name" maxlength="50" onkeydown="if(event.key==='Enter')joinRoom()"/>
+      <button class="ico-btn" onclick="joinRoom()" title="Join room">
+        <svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <!-- ── END ROOM FORM ── -->
-
     <div class="room-list" id="room-list"></div>
     <div class="sb-foot">
       <button class="logout" onclick="logout()">
@@ -226,6 +189,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
     </div>
   </div>
 
+  <!-- main area -->
   <div class="main">
     <div class="no-room" id="no-room">
       <svg viewBox="0 0 44 44" fill="none"><rect x="4" y="8" width="36" height="24" rx="4" stroke="currentColor" stroke-width="1.6"/><path d="M14 32l-6 6V32" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 18h18M13 23h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -261,10 +225,11 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
   </div>
 </div>
 
-</div><div class="toast" id="toast"></div>
+</div><!-- #app -->
+<div class="toast" id="toast"></div>
 
 <script>
-const SERVER   = 'https://anonymous-chat-app-8f3i.onrender.com';
+const SERVER   = 'http://localhost:3000';
 const SEC_KEY  = 'anon-chat-super-secret-key-2024';
 const MAX_MSG  = 500;
 
@@ -273,7 +238,6 @@ const dec = c => { try { return CryptoJS.AES.decrypt(c, SEC_KEY).toString(Crypto
 
 let socket = null, me = null, activeRoom = null, rooms = {};
 let authMode = 'login';
-let roomPasswordsCache = {};
 
 /* ── tab ── */
 function setTab(m) {
@@ -301,7 +265,7 @@ async function doAuth() {
     if (authMode === 'register') { toast('Account created — sign in!'); setTab('login'); return; }
     me = d.username;
     connectSocket(d.socketAuth);
-  } catch { errEl.textContent = 'Cannot reach server. Is it running?'; }
+  } catch { errEl.textContent = 'Cannot reach server. Is it running on :3000?'; }
   finally { btn.disabled = false; btn.textContent = authMode === 'login' ? 'Sign in' : 'Create account'; }
 }
 
@@ -338,61 +302,32 @@ function connectSocket(auth) {
 /* ── rooms ── */
 function joinRoom() {
   const inp = document.getElementById('room-inp');
-  const passInp = document.getElementById('room-pass');
   const name = inp.value.trim();
-  const pass = passInp ? passInp.value : '';
-
   if (!name || !socket) return;
-
-  socket.emit('join_room', { room: name, password: pass }, ack => {
+  socket.emit('join_room', { room: name }, ack => {
     if (ack?.error) { toast(ack.error); return; }
-    
     inp.value = '';
-    if (passInp) passInp.value = ''; 
-    
     rooms[name] = ack.users || [];
-    roomPasswordsCache[name] = pass; 
-    
-    switchRoom(name, ack.history);
+    switchRoom(name);
     renderRooms();
   });
 }
 
-function switchRoom(name, history = null) {
-  // Case 1: switching to a different room we haven't joined yet in this session
+function switchRoom(name) {
   if (activeRoom && activeRoom !== name) {
-    socket.emit('join_room', { room: name, password: roomPasswordsCache[name] }, ack => {
-      if (ack?.error) { toast(ack.error); return; }
-      if (ack?.users) { rooms[name] = ack.users; }
-
-      // Activate the room view, then render history from the ack
-      _activateRoomView(name, ack?.users || rooms[name] || []);
-      clearMsgs();
-      if (ack?.history && ack.history.length > 0) {
-        ack.history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
-      }
+    socket.emit('join_room', { room: name }, ack => {
+      if (ack?.users) { rooms[name] = ack.users; setCount(ack.users); }
     });
-    return; // Wait for ack before doing anything else
   }
-
-  // Case 2: first join (history already provided by joinRoom's ack) or re-clicking active room
-  _activateRoomView(name, rooms[name] || []);
-  clearMsgs();
-  if (history && history.length > 0) {
-    history.forEach(m => appendMsg(m.username, dec(m.message), m.timestamp, m.username === me));
-  }
-}
-
-// Shared helper — sets the active room and updates UI chrome
-function _activateRoomView(name, users) {
   activeRoom = name;
   document.getElementById('no-room').style.display  = 'none';
   const rv = document.getElementById('room-view');
   rv.style.display = 'flex';
   document.getElementById('h-room').textContent = name;
-  setCount(users);
-  document.getElementById('msg-ta').disabled    = false;
-  document.getElementById('send-btn').disabled  = false;
+  setCount(rooms[name] || []);
+  clearMsgs();
+  document.getElementById('msg-ta').disabled   = false;
+  document.getElementById('send-btn').disabled = false;
   document.getElementById('msg-ta').placeholder = `Message #${name}…`;
   renderRooms();
   document.getElementById('sidebar').classList.remove('open');
