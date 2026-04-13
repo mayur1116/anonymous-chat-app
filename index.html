@@ -328,6 +328,77 @@ let isCurrentlyTyping = false;
 let ctxMsgId = null;
 let ctxRoom  = null;
 
+// ── [NEW] localStorage + URL persistence keys ─────────────────────────────────
+const LS_AUTH   = 'anon_auth';    // { username, password }
+const LS_ROOMS  = 'anon_rooms';   // { [roomName]: password }
+const LS_ACTIVE = 'anon_active';  // roomName string
+
+// ── [NEW] localStorage helpers ────────────────────────────────────────────────
+function lsSaveAuth(username, password) {
+  try { localStorage.setItem(LS_AUTH, JSON.stringify({ username, password })); } catch (_) {}
+}
+
+function lsClearAll() {
+  try {
+    localStorage.removeItem(LS_AUTH);
+    localStorage.removeItem(LS_ROOMS);
+    localStorage.removeItem(LS_ACTIVE);
+  } catch (_) {}
+}
+
+function lsSaveRoom(roomName, roomPass) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}');
+    stored[roomName] = roomPass;
+    localStorage.setItem(LS_ROOMS, JSON.stringify(stored));
+  } catch (_) {}
+}
+
+function lsRemoveRoom(roomName) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}');
+    delete stored[roomName];
+    localStorage.setItem(LS_ROOMS, JSON.stringify(stored));
+    if (localStorage.getItem(LS_ACTIVE) === roomName) {
+      localStorage.removeItem(LS_ACTIVE);
+    }
+  } catch (_) {}
+}
+
+function lsSetActive(roomName) {
+  try {
+    if (roomName) localStorage.setItem(LS_ACTIVE, roomName);
+    else          localStorage.removeItem(LS_ACTIVE);
+  } catch (_) {}
+}
+
+// ── [NEW] URL helpers ─────────────────────────────────────────────────────────
+function urlSetRoom(roomName) {
+  const url = new URL(window.location.href);
+  if (roomName) url.searchParams.set('room', roomName);
+  else          url.searchParams.delete('room');
+  history.replaceState(null, '', url.toString());
+}
+
+function urlGetRoom() {
+  try { return new URL(window.location.href).searchParams.get('room') || null; }
+  catch (_) { return null; }
+}
+
+// ── [NEW] Auto-restore room after socket connects ─────────────────────────────
+function attemptRoomRestore() {
+  // Priority: URL param → localStorage active room
+  const targetRoom = urlGetRoom() || localStorage.getItem(LS_ACTIVE) || null;
+  if (!targetRoom) return;
+
+  let storedRooms = {};
+  try { storedRooms = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}'); } catch (_) {}
+  const roomPass = storedRooms[targetRoom];
+  if (!roomPass) return; // No saved password — can't rejoin silently
+
+  _emitJoinRoom(targetRoom, roomPass);
+}
+
 // ── Emoji Picker ──────────────────────────────────────────────────────────────
 const picker = new EmojiMart.Picker({
   onEmojiSelect: (emoji) => {
@@ -373,6 +444,8 @@ async function doAuth() {
     if (!r.ok) { errEl.textContent = d.error || 'Error.'; return; }
     if (authMode === 'register') { toast('Account created — sign in!'); setTab('login'); return; }
     me = d.username;
+    // [NEW] Persist credentials so we can auto-login on refresh
+    lsSaveAuth(me, pass);
     connectSocket(d.socketAuth);
   } catch {
     errEl.textContent = 'Cannot reach server.';
@@ -389,6 +462,9 @@ function connectSocket(auth) {
     showPage('chat');
     document.getElementById('avi').textContent = me.slice(0, 2).toUpperCase();
     document.getElementById('uname-label').textContent = me;
+
+    // [NEW] Restore the room the user was in before the refresh
+    attemptRoomRestore();
   });
 
   socket.on('connect_error', () => setConn(false));
@@ -539,6 +615,9 @@ function _emitJoinRoom(roomName, roomPass) {
       });
     }
 
+    // [NEW] Persist room password and update URL
+    lsSaveRoom(roomName, roomPass);
+
     closeModal();
     renderRooms();
     switchToRoom(roomName);
@@ -559,6 +638,10 @@ function switchToRoom(name) {
   document.getElementById('emoji-picker-container').style.display = 'none';
   // Sidebar: close on mobile
   document.getElementById('sidebar').classList.remove('open');
+
+  // [NEW] Keep URL and localStorage in sync with the active room
+  urlSetRoom(name);
+  lsSetActive(name);
 }
 
 function leaveRoomClick(name, e) {
@@ -566,10 +649,14 @@ function leaveRoomClick(name, e) {
   socket.emit('leave_room', { room: name }, () => {});
   delete rooms[name];
   delete roomPasswords[name];
+  // [NEW] Clean up persistence for this room
+  lsRemoveRoom(name);
   if (activeRoom === name) {
     activeRoom = null;
     document.getElementById('room-view').style.display    = 'none';
     document.getElementById('welcome-view').style.display = '';
+    // [NEW] Clear room from URL when leaving the active room
+    urlSetRoom(null);
   }
   renderRooms();
 }
@@ -791,6 +878,9 @@ function logout() {
   document.getElementById('auth-err').textContent = '';
   document.getElementById('a-user').value = '';
   document.getElementById('a-pass').value = '';
+  // [NEW] Clear all persisted session data on explicit logout
+  lsClearAll();
+  urlSetRoom(null);
 }
 
 function setConn(on) {
@@ -818,6 +908,22 @@ function toast(m) {
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// ── [NEW] Auto-restore session on page load ───────────────────────────────────
+// Runs once the DOM is ready. If localStorage has valid credentials,
+// the user is silently re-authenticated and their last room is rejoined.
+window.addEventListener('DOMContentLoaded', () => {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_AUTH) || 'null'); } catch (_) {}
+
+  if (saved?.username && saved?.password) {
+    // Pre-fill auth fields (invisible to user — happens before paint)
+    document.getElementById('a-user').value = saved.username;
+    document.getElementById('a-pass').value = saved.password;
+    // Trigger login silently
+    doAuth();
+  }
+});
 </script>
 </body>
 </html>
