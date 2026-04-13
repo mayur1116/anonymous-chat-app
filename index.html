@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>AnonChat | Secure Rooms</title>
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
@@ -16,34 +16,45 @@
   --text:#dddde8;--muted:#7777a0;--dim:#44445a;
   --red:#e05252;--green:#1aab76;--amber:#f0a500;
   --r:10px;--font:'Segoe UI',system-ui,sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
-#app{display:flex;height:100vh}
-.page{display:none;flex:1}
+#app{display:flex;height:100%;height:100dvh}
+.page{display:none;flex:1;overflow:hidden}
 .page.show{display:flex}
 .center-page{align-items:center;justify-content:center;padding:20px;flex-direction:column;overflow-y:auto}
 
 /* ── AUTH ── */
 .auth-wrap{width:100%;max-width:360px}
 .brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
-.brand-icon{width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.brand-icon{width:36px;height:36px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .brand-icon svg{width:18px;height:18px}
 .brand h1{font-size:20px;font-weight:600;letter-spacing:-.4px}
 .brand span{font-size:12px;color:var(--muted);margin-left:2px}
 .seg{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;gap:3px;margin-bottom:24px}
-.seg button{flex:1;padding:8px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:.15s}
+.seg button{flex:1;padding:10px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
 .seg button.on{background:var(--s3);color:var(--text)}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
-.field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:14px;padding:11px 13px;outline:none;transition:border-color .15s;font-family:var(--font)}
+.field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:16px;padding:12px 13px;outline:none;transition:border-color .15s;font-family:var(--font);-webkit-appearance:none}
 .field input:focus{border-color:var(--acc)}
-.auth-btn{width:100%;padding:12px;margin-top:4px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;font-family:var(--font)}
+.auth-btn{width:100%;padding:13px;margin-top:4px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;font-family:var(--font);-webkit-tap-highlight-color:transparent}
 .auth-btn:hover{background:#5a4bd4}
 .auth-err{min-height:18px;font-size:12px;color:var(--red);text-align:center;margin-top:10px}
 
 /* ── CHAT LAYOUT ── */
-#chat{flex-direction:row}
-.sidebar{width:248px;min-width:248px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:14px 12px;gap:0;overflow:hidden}
+#chat{flex-direction:row;position:relative}
+
+/* Sidebar */
+.sidebar{
+  width:260px;min-width:260px;background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:14px 12px;gap:0;overflow:hidden;
+  transition:transform .22s cubic-bezier(.4,0,.2,1);
+  z-index:50;flex-shrink:0;
+}
 .sb-brand{display:flex;align-items:center;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .sb-brand .ico{width:26px;height:26px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sb-brand .ico svg{width:13px;height:13px}
@@ -54,51 +65,73 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 .avi{width:30px;height:30px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
 .user-pill .uname{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sb-actions{display:flex;gap:6px;margin-bottom:14px}
-.sb-action-btn{flex:1;padding:8px 6px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s;white-space:nowrap}
+.sb-action-btn{flex:1;padding:9px 6px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .sb-action-btn:hover{background:var(--s3);border-color:var(--acc);color:var(--acc3)}
 .sb-action-btn.primary{background:rgba(108,92,231,.15);border-color:rgba(108,92,231,.4);color:var(--acc3)}
 .sb-action-btn.primary:hover{background:rgba(108,92,231,.25)}
 .sec-label{font-size:10px;letter-spacing:.7px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding:0 2px}
 .room-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
-.ri{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:8px;cursor:pointer;color:var(--muted);transition:.12s;font-size:13px;user-select:none}
-.ri:hover{background:var(--s2);color:var(--text)}
+.ri{display:flex;align-items:center;gap:7px;padding:9px;border-radius:8px;cursor:pointer;color:var(--muted);transition:.12s;font-size:13px;user-select:none;-webkit-tap-highlight-color:transparent}
+.ri:hover,.ri:active{background:var(--s2);color:var(--text)}
 .ri.on{background:rgba(108,92,231,.15);color:var(--acc3)}
 .ri .hash{font-size:14px;flex-shrink:0}
 .ri .rname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ri .xbtn{width:18px;height:18px;border:none;background:none;color:var(--dim);cursor:pointer;opacity:0;border-radius:4px;transition:.12s;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-.ri:hover .xbtn{opacity:1}.xbtn:hover{color:var(--red)!important}
+.ri .xbtn{width:24px;height:24px;border:none;background:none;color:var(--dim);cursor:pointer;border-radius:4px;transition:.12s;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.ri .xbtn:hover{color:var(--red)!important;background:rgba(224,82,82,.12)}
 .unread-badge{min-width:18px;height:18px;background:var(--acc);border-radius:9px;font-size:10px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
 .unread-badge.show{display:flex}
-.sb-foot{padding-top:10px;margin-top:6px;border-top:1px solid var(--border)}
-.logout{width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:var(--r);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.sb-foot{padding-top:10px;margin-top:6px;border-top:1px solid var(--border);padding-bottom:calc(var(--safe-bottom))}
+.logout{width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:var(--r);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;-webkit-tap-highlight-color:transparent}
 .logout:hover{border-color:var(--red);color:var(--red);background:rgba(224,82,82,.06)}
 
+/* Sidebar overlay backdrop */
+.sidebar-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+
 /* ── MAIN ── */
-.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;overflow:hidden}
 
 /* Welcome view */
-#welcome-view{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:20px;text-align:center;color:var(--muted)}
+#welcome-view{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:24px;text-align:center;color:var(--muted)}
 .welcome-icon{font-size:48px;line-height:1;margin-bottom:4px}
 #welcome-view h2{font-size:20px;font-weight:600;color:var(--text)}
 #welcome-view p{font-size:14px;max-width:320px;line-height:1.6}
-.welcome-btns{display:flex;gap:10px;margin-top:8px}
-.welcome-btns button{padding:10px 20px;border-radius:var(--r);border:1px solid var(--border2);background:var(--s2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:.15s}
+.welcome-btns{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center}
+.welcome-btns button{padding:11px 22px;border-radius:var(--r);border:1px solid var(--border2);background:var(--s2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
 .welcome-btns button:hover{background:var(--s3);border-color:var(--acc);color:var(--acc3)}
 .welcome-btns button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
 .welcome-btns button.primary:hover{background:#5a4bd4}
 
 /* Room view */
-#room-view{display:none;flex-direction:column;flex:1;min-height:0}
-.chat-hdr{height:52px;padding:0 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+#room-view{display:none;flex-direction:column;flex:1;min-height:0;height:100%}
+.chat-hdr{
+  height:54px;padding:0 14px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  padding-top:var(--safe-top);
+}
 .chat-hdr .h-hash{color:var(--muted);font-size:16px}
-.chat-hdr .h-room{font-size:15px;font-weight:600;flex:1}
-.h-users{font-size:12px;color:var(--muted);background:var(--s2);border-radius:20px;padding:3px 10px}
-.mob-menu{display:none;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:4px;border-radius:6px}
-.msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth}
-.msgs::-webkit-scrollbar{width:4px}.msgs::-webkit-scrollbar-track{background:transparent}.msgs::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.chat-hdr .h-room{font-size:15px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-users{font-size:12px;color:var(--muted);background:var(--s2);border-radius:20px;padding:3px 10px;white-space:nowrap;flex-shrink:0}
+.mob-menu{
+  display:none;background:none;border:none;color:var(--text);
+  font-size:20px;cursor:pointer;padding:6px;border-radius:8px;
+  flex-shrink:0;-webkit-tap-highlight-color:transparent;
+  width:38px;height:38px;align-items:center;justify-content:center;
+}
+
+.msgs{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:14px 14px;display:flex;flex-direction:column;gap:4px;
+  scroll-behavior:smooth;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.msgs::-webkit-scrollbar{width:3px}.msgs::-webkit-scrollbar-track{background:transparent}.msgs::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
 
 /* Messages */
-.msg-wrap{display:flex;flex-direction:column;max-width:68%;animation:msgIn .15s ease}
+.msg-wrap{display:flex;flex-direction:column;max-width:80%;animation:msgIn .15s ease}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .msg-wrap.me{align-self:flex-end}.msg-wrap.them{align-self:flex-start}
 .msg-top{font-size:11px;color:var(--muted);margin-bottom:3px;padding:0 4px;display:flex;gap:6px;align-items:center}
@@ -110,57 +143,177 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 .bubble.deleted-msg{background:var(--s3)!important;color:var(--muted)!important;font-style:italic;cursor:default}
 .sys{align-self:center;font-size:11px;color:var(--muted);background:var(--s2);border-radius:20px;padding:3px 12px;margin:5px 0}
 
-/* Typing indicator */
-.typing-ind{min-height:22px;padding:2px 18px 4px;font-size:12px;color:var(--muted);font-style:italic;flex-shrink:0}
-.typing-dots::after{content:'';animation:dots 1.2s steps(3,end) infinite}
-@keyframes dots{0%{content:'.'}33%{content:'..'}66%,100%{content:'...'}}
+/* Typing indicator — always visible, proper height */
+.typing-ind{
+  min-height:26px;height:26px;
+  padding:4px 14px;
+  font-size:12px;color:var(--acc3);
+  font-style:italic;
+  flex-shrink:0;
+  display:flex;align-items:center;
+  background:transparent;
+  overflow:hidden;
+}
+.typing-dots{display:inline-flex;align-items:center;gap:4px;color:var(--acc3)}
+.typing-dots .dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--acc3);opacity:.4;
+  animation:dotBounce 1.2s ease-in-out infinite;
+  flex-shrink:0;
+}
+.typing-dots .dot:nth-child(2){animation-delay:.2s}
+.typing-dots .dot:nth-child(3){animation-delay:.4s}
+@keyframes dotBounce{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.typing-label{margin-left:6px;font-size:12px;color:var(--muted)}
 
 /* Input bar */
-.ibar{padding:10px 18px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;position:relative;flex-shrink:0}
-.ibar textarea{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:10px 14px;resize:none;outline:none;max-height:120px;font-family:var(--font);font-size:14px;line-height:1.5;transition:border-color .15s}
+.ibar{
+  padding:8px 12px calc(8px + var(--safe-bottom)) 12px;
+  border-top:1px solid var(--border);
+  display:flex;gap:8px;align-items:flex-end;
+  position:relative;flex-shrink:0;
+  background:var(--bg);
+}
+.ibar textarea{
+  flex:1;background:var(--s2);border:1px solid var(--border);
+  border-radius:22px;color:var(--text);
+  padding:10px 14px;resize:none;outline:none;
+  max-height:100px;font-family:var(--font);font-size:15px;
+  line-height:1.5;transition:border-color .15s;
+  -webkit-appearance:none;
+}
 .ibar textarea:focus{border-color:var(--acc)}
-.emoji-trigger{width:38px;height:38px;border:1px solid var(--border);background:var(--s2);border-radius:10px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:18px;flex-shrink:0}
+.emoji-trigger{
+  width:40px;height:40px;border:1px solid var(--border);
+  background:var(--s2);border-radius:50%;color:var(--muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:.15s;font-size:18px;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
 .emoji-trigger:hover{background:var(--s3);color:var(--text);border-color:var(--acc)}
-.send{width:38px;height:38px;background:var(--acc);border:none;border-radius:10px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
-.send:hover{background:#5a4bd4}
-#emoji-picker-container{position:absolute;bottom:70px;right:18px;z-index:100;display:none}
+.send{
+  width:40px;height:40px;background:var(--acc);border:none;
+  border-radius:50%;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.send:hover,.send:active{background:#5a4bd4}
+#emoji-picker-container{
+  position:fixed;bottom:70px;right:12px;z-index:100;display:none;
+  max-width:calc(100vw - 24px);
+}
 
 /* ── MODAL ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center;padding:0}
 .modal-overlay.show{display:flex}
-.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:24px;width:100%;max-width:380px;position:relative}
-.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border:none;background:var(--s3);border-radius:6px;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.modal-box{
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:20px 20px 0 0;
+  padding:24px 20px calc(24px + var(--safe-bottom)) 20px;
+  width:100%;max-width:480px;position:relative;
+  animation:slideUp .25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--s4);border-radius:2px;margin:0 auto 20px;cursor:grab}
+.modal-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border:none;background:var(--s3);border-radius:8px;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;-webkit-tap-highlight-color:transparent}
 .modal-close:hover{color:var(--text)}
 .modal-tabs{display:flex;background:var(--s2);border-radius:var(--r);padding:3px;gap:3px;margin-bottom:20px}
-.modal-tabs button{flex:1;padding:8px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:.15s}
+.modal-tabs button{flex:1;padding:10px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
 .modal-tabs button.on{background:var(--s3);color:var(--text)}
-.modal-title{font-size:16px;font-weight:600;margin-bottom:6px}
-.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
-.modal-btn{width:100%;padding:11px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--font);margin-top:4px}
+.modal-btn{width:100%;padding:13px;background:var(--acc);border:none;border-radius:var(--r);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--font);margin-top:4px;-webkit-tap-highlight-color:transparent}
 .modal-btn:hover{background:#5a4bd4}
 .modal-btn.sec{background:var(--s3);border:1px solid var(--border)}
 .modal-btn.sec:hover{background:var(--s4)}
 .modal-err{min-height:16px;font-size:12px;color:var(--red);margin-top:8px;text-align:center}
 
 /* ── CONTEXT MENU ── */
-#ctx-menu{display:none;position:fixed;z-index:300;background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.ctx-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text);border:none;background:none;width:100%;text-align:left;transition:.12s}
-.ctx-item:hover{background:var(--s4)}
+#ctx-menu{display:none;position:fixed;z-index:300;background:var(--s3);border:1px solid var(--border2);border-radius:12px;padding:4px;min-width:190px;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--text);border:none;background:none;width:100%;text-align:left;transition:.12s;-webkit-tap-highlight-color:transparent}
+.ctx-item:hover,.ctx-item:active{background:var(--s4)}
 .ctx-item.danger{color:var(--red)}
 .ctx-item.danger:hover{background:rgba(224,82,82,.12)}
 .ctx-sep{height:1px;background:var(--border);margin:3px 0}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:9px 18px;font-size:13px;z-index:400;transition:transform .22s ease;white-space:nowrap}
+.toast{position:fixed;bottom:calc(22px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(60px);background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:9px 18px;font-size:13px;z-index:400;transition:transform .22s ease;white-space:nowrap;max-width:calc(100vw - 40px);text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
 /* ── MOBILE ── */
 @media(max-width:650px){
+  /* Sidebar becomes a full-height drawer */
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;
+    transform:translateX(-100%);
+    width:280px;min-width:unset;
+    border-right:none;
+    box-shadow:4px 0 24px rgba(0,0,0,.4);
+    padding:calc(14px + var(--safe-top)) 12px 14px;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop{display:none}
+  .sidebar.open ~ .sidebar-backdrop,
+  .sidebar-backdrop.show{display:block}
+
+  /* Always show hamburger */
   .mob-menu{display:flex!important}
-  .sidebar{width:0;padding:0;overflow:hidden;position:fixed;inset:0;z-index:50;transition:width .22s,padding .22s}
-  .sidebar.open{width:248px;padding:14px 12px}
+
+  /* Header adjustments */
+  .chat-hdr{height:52px;padding:0 12px;gap:8px}
   .h-users{display:none}
+
+  /* Slightly wider message bubbles on small screens */
+  .msg-wrap{max-width:88%}
+
+  /* Messages padding */
+  .msgs{padding:12px 10px;gap:3px}
+
+  /* Typing indicator — ensure it's visible and not clipped */
+  .typing-ind{
+    padding:4px 10px;
+    min-height:24px;height:24px;
+    font-size:11px;
+  }
+
+  /* Input bar — taller touch targets */
+  .ibar{padding:8px 10px calc(8px + var(--safe-bottom)) 10px;gap:6px}
+  .ibar textarea{font-size:16px;padding:10px 12px}/* 16px prevents iOS zoom */
+  .emoji-trigger,.send{width:42px;height:42px}
+
+  /* Emoji picker — full width on mobile */
+  #emoji-picker-container{
+    position:fixed;bottom:0;left:0;right:0;
+    max-width:100%;width:100%;
+    border-radius:20px 20px 0 0;
+    overflow:hidden;
+    box-shadow:0 -4px 30px rgba(0,0,0,.4);
+  }
+
+  /* Modal fills from bottom */
+  .modal-box{max-width:100%;border-radius:20px 20px 0 0}
+
+  /* Auth page */
+  .auth-wrap{max-width:100%}
+
+  /* Context menu */
+  #ctx-menu{min-width:170px}
 }
+
+@media(min-width:651px){
+  /* Desktop: modal is centered, not bottom sheet */
+  .modal-overlay{align-items:center;padding:20px}
+  .modal-box{border-radius:16px;max-width:400px;animation:fadeScale .2s ease}
+  @keyframes fadeScale{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .modal-handle{display:none}
+}
+
+/* Prevent body scroll when modal open */
+body.modal-open{overflow:hidden}
+
+/* Scrollbar thin for all */
+*::-webkit-scrollbar{width:3px;height:3px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
 </style>
 </head>
 <body>
@@ -177,14 +330,14 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <button class="on" id="tab-login"  onclick="setTab('login')">Sign in</button>
       <button         id="tab-reg"   onclick="setTab('register')">Register</button>
     </div>
-    <div class="field"><label>Username</label><input id="a-user" type="text" placeholder="your_username" onkeydown="if(event.key==='Enter')doAuth()"/></div>
-    <div class="field"><label>Password</label><input id="a-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/></div>
+    <div class="field"><label>Username</label><input id="a-user" type="text" autocomplete="username" placeholder="your_username" onkeydown="if(event.key==='Enter')doAuth()"/></div>
+    <div class="field"><label>Password</label><input id="a-pass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/></div>
     <button class="auth-btn" id="auth-btn" onclick="doAuth()">Sign in</button>
     <div class="auth-err" id="auth-err"></div>
   </div>
 </div>
 
-<!-- ── CHAT (dashboard + chat combined) ──────────────────────────────────── -->
+<!-- ── CHAT ──────────────────────────────────────────────────────────────── -->
 <div class="page" id="chat">
 
   <!-- Sidebar -->
@@ -216,6 +369,9 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
     </div>
   </div>
 
+  <!-- Backdrop for mobile sidebar -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
   <!-- Main area -->
   <div class="main" id="main">
 
@@ -230,10 +386,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       </div>
     </div>
 
-    <!-- Room view (hidden until a room is active) -->
+    <!-- Room view -->
     <div id="room-view">
       <div class="chat-hdr">
-        <button class="mob-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+        <button class="mob-menu" onclick="toggleSidebar()" aria-label="Menu">☰</button>
         <span class="h-hash">#</span>
         <span class="h-room" id="h-room">—</span>
         <span class="h-users" id="h-users">0 online</span>
@@ -242,11 +398,11 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
       <div class="typing-ind" id="typing-indicator"></div>
       <div id="emoji-picker-container"></div>
       <div class="ibar">
-        <button class="emoji-trigger" onclick="toggleEmojiPicker()" title="Emoji">😊</button>
+        <button class="emoji-trigger" onclick="toggleEmojiPicker()" title="Emoji" aria-label="Emoji">😊</button>
         <textarea id="msg-ta" rows="1" placeholder="Message…"
           oninput="autoResize(this);handleTypingInput()"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
-        <button class="send" onclick="sendMsg()" title="Send">
+        <button class="send" onclick="sendMsg()" title="Send" aria-label="Send">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
@@ -257,8 +413,9 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 </div><!-- #app -->
 
 <!-- ── MODAL ──────────────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+<div class="modal-overlay" id="modal-overlay" onclick="handleModalOverlayClick(event)">
   <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal()">✕</button>
 
     <div class="modal-tabs" id="modal-tabs">
@@ -268,15 +425,15 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 
     <!-- Join panel -->
     <div id="mpanel-join">
-      <div class="field"><label>Room Name</label><input id="j-room" placeholder="e.g. secret-base" onkeydown="if(event.key==='Enter')reqJoinRoom()"/></div>
-      <div class="field"><label>Room Password</label><input id="j-pass" type="password" placeholder="Room key" onkeydown="if(event.key==='Enter')reqJoinRoom()"/></div>
+      <div class="field"><label>Room Name</label><input id="j-room" autocomplete="off" placeholder="e.g. secret-base" onkeydown="if(event.key==='Enter')reqJoinRoom()"/></div>
+      <div class="field"><label>Room Password</label><input id="j-pass" type="password" autocomplete="off" placeholder="Room key" onkeydown="if(event.key==='Enter')reqJoinRoom()"/></div>
       <button class="modal-btn" onclick="reqJoinRoom()">Enter Room</button>
     </div>
 
     <!-- Create panel -->
     <div id="mpanel-create" style="display:none">
-      <div class="field"><label>Room Name</label><input id="c-room" placeholder="e.g. top-secret" onkeydown="if(event.key==='Enter')reqCreateRoom()"/></div>
-      <div class="field"><label>Set Password</label><input id="c-pass" type="password" placeholder="Create a room key" onkeydown="if(event.key==='Enter')reqCreateRoom()"/></div>
+      <div class="field"><label>Room Name</label><input id="c-room" autocomplete="off" placeholder="e.g. top-secret" onkeydown="if(event.key==='Enter')reqCreateRoom()"/></div>
+      <div class="field"><label>Set Password</label><input id="c-pass" type="password" autocomplete="off" placeholder="Create a room key" onkeydown="if(event.key==='Enter')reqCreateRoom()"/></div>
       <button class="modal-btn sec" onclick="reqCreateRoom()">Create Room</button>
     </div>
 
@@ -287,12 +444,12 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 <!-- ── CONTEXT MENU ───────────────────────────────────────────────────────── -->
 <div id="ctx-menu">
   <button class="ctx-item" id="ctx-del-me"  onclick="doDeleteMsg('me')">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
     Delete for me
   </button>
   <div class="ctx-sep"></div>
   <button class="ctx-item danger" id="ctx-del-all" onclick="doDeleteMsg('everyone')">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
     Delete for everyone
   </button>
 </div>
@@ -302,8 +459,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--b
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
-const SERVER  = 'https://anonymous-chat-app-8f3i.onrender.com'; // ← Update to your server URL
-const SEC_KEY = 'anon-chat-super-secret-key-2024';              // ← Must match CHAT_SECRET env var
+const SERVER  = 'https://anonymous-chat-app-8f3i.onrender.com';
+const SEC_KEY = 'anon-chat-super-secret-key-2024';
 const MAX_MSG = 500;
 
 const enc = t => CryptoJS.AES.encrypt(t, SEC_KEY).toString();
@@ -315,29 +472,24 @@ let me         = null;
 let activeRoom = null;
 let authMode   = 'login';
 
-// rooms[name] = { users: string[], messages: MsgObj[], unread: number }
 const rooms        = {};
 const roomPasswords = {};
 
-// Typing state
-const typingUsers = {}; // { room: { username: clearTimeoutId } }
+const typingUsers = {};
 let typingEmitTimeout = null;
 let isCurrentlyTyping = false;
 
-// Context menu state
 let ctxMsgId = null;
 let ctxRoom  = null;
 
-// ── [NEW] localStorage + URL persistence keys ─────────────────────────────────
-const LS_AUTH   = 'anon_auth';    // { username, password }
-const LS_ROOMS  = 'anon_rooms';   // { [roomName]: password }
-const LS_ACTIVE = 'anon_active';  // roomName string
+// ── Persistence keys ──────────────────────────────────────────────────────────
+const LS_AUTH   = 'anon_auth';
+const LS_ROOMS  = 'anon_rooms';
+const LS_ACTIVE = 'anon_active';
 
-// ── [NEW] localStorage helpers ────────────────────────────────────────────────
 function lsSaveAuth(username, password) {
   try { localStorage.setItem(LS_AUTH, JSON.stringify({ username, password })); } catch (_) {}
 }
-
 function lsClearAll() {
   try {
     localStorage.removeItem(LS_AUTH);
@@ -345,7 +497,6 @@ function lsClearAll() {
     localStorage.removeItem(LS_ACTIVE);
   } catch (_) {}
 }
-
 function lsSaveRoom(roomName, roomPass) {
   try {
     const stored = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}');
@@ -353,18 +504,14 @@ function lsSaveRoom(roomName, roomPass) {
     localStorage.setItem(LS_ROOMS, JSON.stringify(stored));
   } catch (_) {}
 }
-
 function lsRemoveRoom(roomName) {
   try {
     const stored = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}');
     delete stored[roomName];
     localStorage.setItem(LS_ROOMS, JSON.stringify(stored));
-    if (localStorage.getItem(LS_ACTIVE) === roomName) {
-      localStorage.removeItem(LS_ACTIVE);
-    }
+    if (localStorage.getItem(LS_ACTIVE) === roomName) localStorage.removeItem(LS_ACTIVE);
   } catch (_) {}
 }
-
 function lsSetActive(roomName) {
   try {
     if (roomName) localStorage.setItem(LS_ACTIVE, roomName);
@@ -372,31 +519,38 @@ function lsSetActive(roomName) {
   } catch (_) {}
 }
 
-// ── [NEW] URL helpers ─────────────────────────────────────────────────────────
+// ── URL helpers ───────────────────────────────────────────────────────────────
 function urlSetRoom(roomName) {
   const url = new URL(window.location.href);
   if (roomName) url.searchParams.set('room', roomName);
   else          url.searchParams.delete('room');
   history.replaceState(null, '', url.toString());
 }
-
 function urlGetRoom() {
-  try { return new URL(window.location.href).searchParams.get('room') || null; }
-  catch (_) { return null; }
+  try { return new URL(window.location.href).searchParams.get('room') || null; } catch (_) { return null; }
 }
 
-// ── [NEW] Auto-restore room after socket connects ─────────────────────────────
+// ── Restore after reconnect ───────────────────────────────────────────────────
 function attemptRoomRestore() {
-  // Priority: URL param → localStorage active room
   const targetRoom = urlGetRoom() || localStorage.getItem(LS_ACTIVE) || null;
   if (!targetRoom) return;
-
   let storedRooms = {};
   try { storedRooms = JSON.parse(localStorage.getItem(LS_ROOMS) || '{}'); } catch (_) {}
   const roomPass = storedRooms[targetRoom];
-  if (!roomPass) return; // No saved password — can't rejoin silently
-
+  if (!roomPass) return;
   _emitJoinRoom(targetRoom, roomPass);
+}
+
+// ── Sidebar (mobile) ──────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const sb  = document.getElementById('sidebar');
+  const bd  = document.getElementById('sidebar-backdrop');
+  const isOpen = sb.classList.toggle('open');
+  bd.classList.toggle('show', isOpen);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('show');
 }
 
 // ── Emoji Picker ──────────────────────────────────────────────────────────────
@@ -444,7 +598,6 @@ async function doAuth() {
     if (!r.ok) { errEl.textContent = d.error || 'Error.'; return; }
     if (authMode === 'register') { toast('Account created — sign in!'); setTab('login'); return; }
     me = d.username;
-    // [NEW] Persist credentials so we can auto-login on refresh
     lsSaveAuth(me, pass);
     connectSocket(d.socketAuth);
   } catch {
@@ -458,30 +611,22 @@ function connectSocket(auth) {
 
   socket.on('connect', () => {
     setConn(true);
-    // Go straight to the chat dashboard — no lobby page
     showPage('chat');
     document.getElementById('avi').textContent = me.slice(0, 2).toUpperCase();
     document.getElementById('uname-label').textContent = me;
-
-    // [NEW] Restore the room the user was in before the refresh
     attemptRoomRestore();
   });
 
   socket.on('connect_error', () => setConn(false));
   socket.on('disconnect',    () => setConn(false));
 
-  // Incoming message
   socket.on('receive_message', (msg) => {
     const { id, username, message, timestamp, room, isDeleted, deletedFor } = msg;
     if (!rooms[room]) return;
-
-    // Filter "deleted for me" at arrival
     const df = JSON.parse(deletedFor || '[]');
     if (df.includes(me)) return;
-
     const msgObj = { id, username, message, timestamp, isDeleted, deletedFor };
     rooms[room].messages.push(msgObj);
-
     if (room === activeRoom) {
       renderOneMsg(msgObj, true);
     } else {
@@ -490,12 +635,10 @@ function connectSocket(auth) {
     }
   });
 
-  // Someone deleted a message for everyone
   socket.on('message_deleted', ({ id, room }) => {
     if (!rooms[room]) return;
     const msg = rooms[room].messages.find(m => m.id === id);
     if (msg) msg.isDeleted = 1;
-
     if (room === activeRoom) {
       const el = document.querySelector(`.msg-wrap[data-id="${id}"]`);
       if (el) {
@@ -507,7 +650,6 @@ function connectSocket(auth) {
     }
   });
 
-  // Room events
   socket.on('user_joined', ({ username, room }) => {
     if (room === activeRoom) sysmsg(`${username} joined`);
     if (rooms[room]) rooms[room].users.push(username);
@@ -520,7 +662,6 @@ function connectSocket(auth) {
     if (room === activeRoom) updateUserCount();
   });
 
-  // Typing
   socket.on('typing', ({ username, room, isTyping }) => {
     if (!typingUsers[room]) typingUsers[room] = {};
     if (isTyping) {
@@ -541,17 +682,23 @@ function connectSocket(auth) {
 function openModal(tab) {
   document.getElementById('modal-err').textContent = '';
   document.getElementById('modal-overlay').classList.add('show');
+  document.body.classList.add('modal-open');
   setModalTab(tab);
   setTimeout(() => {
     const id = tab === 'join' ? 'j-room' : 'c-room';
     document.getElementById(id).focus();
-  }, 60);
+  }, 80);
 }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
   ['j-room','j-pass','c-room','c-pass'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('modal-err').textContent = '';
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
 function setModalTab(tab) {
@@ -567,7 +714,6 @@ async function reqCreateRoom() {
   const p = document.getElementById('c-pass').value;
   const errEl = document.getElementById('modal-err');
   if (!r || !p) { errEl.textContent = 'Name and password required.'; return; }
-
   try {
     const res  = await fetch(SERVER + '/rooms/create', {
       method: 'POST',
@@ -593,13 +739,7 @@ function reqJoinRoom() {
 
 function _emitJoinRoom(roomName, roomPass) {
   const errEl = document.getElementById('modal-err');
-
-  // Already joined — just switch to it
-  if (rooms[roomName]) {
-    closeModal();
-    switchToRoom(roomName);
-    return;
-  }
+  if (rooms[roomName]) { closeModal(); switchToRoom(roomName); return; }
 
   socket.emit('join_room', { room: roomName, password: roomPass }, (ack) => {
     if (ack?.error) { errEl.textContent = ack.error; return; }
@@ -607,7 +747,6 @@ function _emitJoinRoom(roomName, roomPass) {
     roomPasswords[roomName] = roomPass;
     rooms[roomName] = { users: ack.users || [], messages: [], unread: 0 };
 
-    // Process history — filter out "deleted for me"
     if (ack.history) {
       rooms[roomName].messages = ack.history.filter(msg => {
         const df = JSON.parse(msg.deletedFor || '[]');
@@ -615,9 +754,7 @@ function _emitJoinRoom(roomName, roomPass) {
       });
     }
 
-    // [NEW] Persist room password and update URL
     lsSaveRoom(roomName, roomPass);
-
     closeModal();
     renderRooms();
     switchToRoom(roomName);
@@ -636,10 +773,7 @@ function switchToRoom(name) {
   document.getElementById('welcome-view').style.display = 'none';
   document.getElementById('room-view').style.display    = 'flex';
   document.getElementById('emoji-picker-container').style.display = 'none';
-  // Sidebar: close on mobile
-  document.getElementById('sidebar').classList.remove('open');
-
-  // [NEW] Keep URL and localStorage in sync with the active room
+  closeSidebar();
   urlSetRoom(name);
   lsSetActive(name);
 }
@@ -649,13 +783,11 @@ function leaveRoomClick(name, e) {
   socket.emit('leave_room', { room: name }, () => {});
   delete rooms[name];
   delete roomPasswords[name];
-  // [NEW] Clean up persistence for this room
   lsRemoveRoom(name);
   if (activeRoom === name) {
     activeRoom = null;
     document.getElementById('room-view').style.display    = 'none';
     document.getElementById('welcome-view').style.display = '';
-    // [NEW] Clear room from URL when leaving the active room
     urlSetRoom(null);
   }
   renderRooms();
@@ -673,12 +805,12 @@ function renderRooms() {
     const unread = rooms[name].unread || 0;
     const d = document.createElement('div');
     d.className = 'ri' + (name === activeRoom ? ' on' : '');
-    d.onclick = () => { activeRoom === name ? null : switchToRoom(name); };
+    d.onclick = () => { if (activeRoom !== name) switchToRoom(name); else closeSidebar(); };
     d.innerHTML = `
       <span class="hash">#</span>
       <span class="rname">${esc(name)}</span>
       <span class="unread-badge ${unread > 0 ? 'show' : ''}">${unread > 99 ? '99+' : unread}</span>
-      <button class="xbtn" title="Leave room">✕</button>
+      <button class="xbtn" title="Leave room" aria-label="Leave ${esc(name)}">✕</button>
     `;
     d.querySelector('.xbtn').onclick = ev => leaveRoomClick(name, ev);
     list.appendChild(d);
@@ -691,7 +823,7 @@ function updateUserCount() {
   document.getElementById('h-users').textContent = `${n} online`;
 }
 
-// ── Rendering messages ────────────────────────────────────────────────────────
+// ── Messages ──────────────────────────────────────────────────────────────────
 function renderAllMsgs() {
   const el = document.getElementById('msgs');
   el.innerHTML = '';
@@ -702,8 +834,6 @@ function renderAllMsgs() {
 
 function renderOneMsg(msg, scroll) {
   const { id, username, message, timestamp, isDeleted, deletedFor } = msg;
-
-  // Skip if deleted for current user
   const df = JSON.parse(deletedFor || '[]');
   if (df.includes(me)) return;
 
@@ -733,12 +863,19 @@ function renderOneMsg(msg, scroll) {
       </div>
       <div class="bubble">${esc(text)}</div>`;
 
-    // Right-click for context menu
     d._ctxHandler = (e) => {
       e.preventDefault();
       showCtxMenu(e, id, activeRoom, own);
     };
     d.addEventListener('contextmenu', d._ctxHandler);
+
+    // Long-press for mobile context menu
+    let pressTimer = null;
+    d.addEventListener('touchstart', (e) => {
+      pressTimer = setTimeout(() => showCtxMenu(e.touches[0], id, activeRoom, own), 550);
+    }, { passive: true });
+    d.addEventListener('touchend', () => clearTimeout(pressTimer));
+    d.addEventListener('touchmove', () => clearTimeout(pressTimer));
   }
 
   msgsEl.appendChild(d);
@@ -765,10 +902,9 @@ function sendMsg() {
   });
 
   ta.value = '';
-  ta.style.height = '';
+  autoResize(ta);
   document.getElementById('emoji-picker-container').style.display = 'none';
 
-  // Stop typing indicator
   clearTimeout(typingEmitTimeout);
   if (isCurrentlyTyping) {
     isCurrentlyTyping = false;
@@ -793,27 +929,33 @@ function handleTypingInput() {
 function updateTypingIndicator() {
   const el = document.getElementById('typing-indicator');
   if (!el) return;
-  if (!activeRoom || !typingUsers[activeRoom]) { el.textContent = ''; return; }
-  const typers = Object.keys(typingUsers[activeRoom]);
-  if (typers.length === 0) { el.textContent = ''; return; }
-  const names = typers.map(esc).join(', ');
+  if (!activeRoom || !typingUsers[activeRoom]) { el.innerHTML = ''; return; }
+  const typers = Object.keys(typingUsers[activeRoom]).filter(u => u !== me);
+  if (typers.length === 0) { el.innerHTML = ''; return; }
+
+  const names = typers.slice(0, 2).map(esc).join(', ') + (typers.length > 2 ? ` +${typers.length - 2}` : '');
   const verb  = typers.length === 1 ? 'is' : 'are';
-  el.innerHTML = `<span class="typing-dots">${names} ${verb} typing</span>`;
+
+  el.innerHTML = `
+    <span class="typing-dots">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </span>
+    <span class="typing-label">${names} ${verb} typing</span>
+  `;
 }
 
-// ── Context menu / Delete ─────────────────────────────────────────────────────
+// ── Context menu ──────────────────────────────────────────────────────────────
 function showCtxMenu(e, msgId, room, isOwn) {
   ctxMsgId = msgId;
   ctxRoom  = room;
   const menu = document.getElementById('ctx-menu');
-  // "Delete for everyone" only visible for own messages
   document.getElementById('ctx-del-all').style.display = isOwn ? 'flex' : 'none';
   menu.style.display = 'block';
-  // Position — keep inside viewport
-  const x = Math.min(e.clientX, window.innerWidth  - 200);
-  const y = Math.min(e.clientY, window.innerHeight - 100);
-  menu.style.left = x + 'px';
-  menu.style.top  = y + 'px';
+
+  const x = Math.min((e.clientX || e.pageX), window.innerWidth  - 210);
+  const y = Math.min((e.clientY || e.pageY), window.innerHeight - 110);
+  menu.style.left = Math.max(8, x) + 'px';
+  menu.style.top  = Math.max(8, y) + 'px';
 }
 
 function doDeleteMsg(type) {
@@ -822,43 +964,43 @@ function doDeleteMsg(type) {
 
   socket.emit('delete_message', { id: ctxMsgId, room: ctxRoom, type }, (ack) => {
     if (ack?.error) return toast(ack.error);
-
     if (type === 'me') {
-      // Remove from local cache
       const cache = rooms[ctxRoom];
       if (cache) cache.messages = cache.messages.filter(m => m.id !== ctxMsgId);
-      // Remove from DOM
       const el = document.querySelector(`.msg-wrap[data-id="${ctxMsgId}"]`);
       if (el) el.remove();
     }
-    // 'everyone' handled by the message_deleted event from server
   });
 
   ctxMsgId = null;
   ctxRoom  = null;
 }
 
-// Dismiss context menu on outside click
+// ── Global event listeners ────────────────────────────────────────────────────
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('#ctx-menu')) {
+  if (!e.target.closest('#ctx-menu'))
     document.getElementById('ctx-menu').style.display = 'none';
-  }
 });
 
-// Dismiss emoji picker on outside click
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('#emoji-picker-container') && !e.target.closest('.emoji-trigger')) {
+  if (!e.target.closest('#emoji-picker-container') && !e.target.closest('.emoji-trigger'))
     document.getElementById('emoji-picker-container').style.display = 'none';
-  }
 });
 
-// Close mobile sidebar on outside click
-document.addEventListener('click', (e) => {
-  const sb = document.getElementById('sidebar');
-  if (sb.classList.contains('open') && !e.target.closest('#sidebar') && !e.target.closest('.mob-menu')) {
-    sb.classList.remove('open');
-  }
+// Close sidebar when clicking main area on mobile
+document.getElementById('main').addEventListener('click', () => {
+  if (window.innerWidth <= 650) closeSidebar();
 });
+
+// Handle iOS viewport resize (keyboard open/close)
+if ('visualViewport' in window) {
+  window.visualViewport.addEventListener('resize', () => {
+    const roomView = document.getElementById('room-view');
+    if (roomView && roomView.style.display !== 'none') {
+      roomView.style.height = window.visualViewport.height + 'px';
+    }
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function showPage(name) {
@@ -878,7 +1020,6 @@ function logout() {
   document.getElementById('auth-err').textContent = '';
   document.getElementById('a-user').value = '';
   document.getElementById('a-pass').value = '';
-  // [NEW] Clear all persisted session data on explicit logout
   lsClearAll();
   urlSetRoom(null);
 }
@@ -889,15 +1030,12 @@ function setConn(on) {
 
 function autoResize(ta) {
   ta.style.height = '';
-  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  ta.style.height = Math.min(ta.scrollHeight, 100) + 'px';
 }
 
 function esc(s) {
   return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 let _toastTimer;
@@ -909,18 +1047,13 @@ function toast(m) {
   _toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── [NEW] Auto-restore session on page load ───────────────────────────────────
-// Runs once the DOM is ready. If localStorage has valid credentials,
-// the user is silently re-authenticated and their last room is rejoined.
+// ── Auto-restore session on page load ─────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(LS_AUTH) || 'null'); } catch (_) {}
-
   if (saved?.username && saved?.password) {
-    // Pre-fill auth fields (invisible to user — happens before paint)
     document.getElementById('a-user').value = saved.username;
     document.getElementById('a-pass').value = saved.password;
-    // Trigger login silently
     doAuth();
   }
 });
